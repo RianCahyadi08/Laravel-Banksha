@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\User;
 use App\Models\Wallet;
+use Melihovv\Base64ImageDecoder\Base64ImageDecoder;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
@@ -38,6 +41,35 @@ class AuthController extends Controller
             ], 409);
         }
 
+        try {
+            $profilePicture = null;
+            $ktp            = null;
+
+            if ($request->profile_picture) {
+                $profilePicture = $this->uploadBase64Image($request->profile_picture);
+            }
+
+            if ($request->ktp) {
+                $ktp = $this->uploadBase64Image($request->ktp);
+            }
+        } catch (\Throwable $th) {
+            return response()->json([
+                'message'   => ''
+            ]);
+            // echo $th;
+        }
+
+
+    }
+
+    private function uploadBase64Image($base64Image)
+    {
+        $decoder        = new Base64ImageDecoder($base64Image, $allowedFormats = ['jpeg', 'png', 'gif', 'jpg']);
+        $decodedContent = $decoder->getDecodedContent(); 
+        $format         = $decoder->getFormat();
+        $image          = Str::random(10).'.'.$format;
+        Storage::disk('public')->put($image, $decodedContent);
+        return $image;
     }
 
 }
