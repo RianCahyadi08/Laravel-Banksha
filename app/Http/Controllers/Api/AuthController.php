@@ -11,6 +11,7 @@ use App\Models\Wallet;
 use Melihovv\Base64ImageDecoder\Base64ImageDecoder;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -31,15 +32,16 @@ class AuthController extends Controller
             return response()->json(['errors' => $validator->messages()], 400);
         }
 
-        // var_dump($request->email);
         $user = User::where('email', $request->email)->exists();
-
+        
         if ($user)
         {
             return response()->json([
                 'message'   => 'Email already taken'
             ], 409);
         }
+
+        DB::beginTransaction();
 
         try {
             $profilePicture = null;
@@ -52,14 +54,59 @@ class AuthController extends Controller
             if ($request->ktp) {
                 $ktp = $this->uploadBase64Image($request->ktp);
             }
-        } catch (\Throwable $th) {
-            return response()->json([
-                'message'   => ''
+            
+            $user = User::create([
+                'name'  => $request->name,
+                'email' => $request->email,
+                'username' => $request->name,
+                'password' => bcrypt($request->password),
+                'pin' => $request->pin,
+                'profile_picture' => $profilePicture,
+                'ktp' => $ktp,
+                'verified' => ($ktp) ? true : false,
             ]);
-            // echo $th;
+
+            $wallet = Wallet::create([
+                'balance' => 0,
+                'pin' => $request->pin,
+                'card_number' => $this->generateCardNumber(16),
+                'user_id' => $user->id,
+            ]);
+
+            DB::commit();
+
+            if ($user) {
+                return response()->json([
+                    'message'   => 'Successfully created data',
+                    'data'      => $user,
+                ], 200);
+            }
+
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return response()->json([
+                'message'   => $th->getMessage(),
+            ], 500);
+                // echo $th;
         }
 
 
+    }
+
+    private function generateCardNumber($length)
+    {
+        $result = '';
+        for ($i=0; $i < $length; $i++) { 
+            $result .= mt_rand(0, 9);
+        }
+
+        $wallet = Wallet::where('card_number', $result)->exists();
+
+        if ($wallet) {
+            return $this->generateCardNumber($length);
+        }
+
+        return $result;
     }
 
     private function uploadBase64Image($base64Image)
