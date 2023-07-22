@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Exceptions\JwtException;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
@@ -77,10 +77,20 @@ class AuthController extends Controller
 
             DB::commit();
 
+            $token = JWTAuth::attempt([
+                'email' => $request->email,
+                'password' => $request->password,
+            ]);
+            
+            $userResponse = getUser($request->email);
+            $userResponse->token = $token;
+            $userResponse->token_expired_in = auth()->factory()->getTTL() * 60;
+            $userResponse->token_type = 'bearer';
+
             if ($user) {
                 return response()->json([
                     'message'   => 'Successfully created data',
-                    'data'      => $user,
+                    'data'      => $userResponse,
                 ], 200);
             }
 
@@ -124,7 +134,7 @@ class AuthController extends Controller
             $userResponse->token_type = 'bearer';
 
             return response()->json($userResponse);
-        } catch (\Throwable $th) {
+        } catch (\JWTException $th) {
             return response()->json([
                 'message' => $th->getMessage(),
             ], 500);
