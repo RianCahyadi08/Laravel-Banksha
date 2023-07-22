@@ -118,7 +118,12 @@ class AuthController extends Controller
                 ]);
             }
 
-            return $token;
+            $userResponse = getUser($request->email);
+            $userResponse->token = $token;
+            $userResponse->token_expired_in = auth()->factory()->getTTL() * 60;
+            $userResponse->token_type = 'bearer';
+
+            return response()->json($userResponse);
         } catch (\Throwable $th) {
             return response()->json([
                 'message' => $th->getMessage(),
