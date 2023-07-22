@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TopUpController;
+use App\Http\Controllers\Api\WebHookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,8 @@ use App\Http\Controllers\Api\TopUpController;
 
 Route::post('register', [AuthController::class, 'register'])->name('register');
 Route::post('login', [AuthController::class, 'login'])->name('login');
+
+Route::post('webhooks', [WebHookController::class, 'update']);
 
 Route::group(['middleware' => 'jwt.verify'], function ($router) {
     Route::post('top_up', [TopUpController::class, 'store']);
