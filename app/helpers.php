@@ -1,6 +1,7 @@
 <?php
 use App\Models\User;
 use App\Models\Wallet;
+use App\Models\PaymentMethod;
   
     function getUser($param)
     {
@@ -28,6 +29,19 @@ use App\Models\Wallet;
         }
 
         if ($wallet->pin == $pin) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function checkPaymentMethod($paymentMethod)
+    {
+        $paymentMethods = PaymentMethod::where('code', $paymentMethod)->first();
+
+        if (!$paymentMethods) {
+            return false;
+        } else {
             return true;
         }
 
