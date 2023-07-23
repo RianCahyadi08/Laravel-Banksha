@@ -37,7 +37,8 @@ class DataPlanController extends Controller
         $transactionType = TransactionType::where('code', 'internet')->first();
         $paymentMethod = PaymentMethod::where('code', 'bwa')->first();
         $userWallet = Wallet::where('user_id', $userId)->first();
-
+        
+        $transactionCode = strtoupper(Str::random(10));
         $dataPlan = DataPlan::find($request->data_plan_id);
 
         if (!$dataPlan) {
@@ -59,8 +60,39 @@ class DataPlanController extends Controller
             ], 400);
         }
 
-        return response()->json([
-            'message' => 'Transaction successfully',
-        ]);
+        DB::beginTransaction();
+        try {
+            $transaction = Transaction::create([
+                'user_id' => $userId,
+                'transaction_type_id' => $transactionType->id,
+                'payment_method_id' => $paymentMethod->id,
+                'transaction_code' => $transactionCode,
+                // 'product_id' => $dataPlan->id,
+                'description' => 'Internet data plan '.$dataPlan->name,
+                'amount' => $dataPlan->price,
+                'status' => 'success'
+            ]);
+
+            $dataPlanHistories = DataPlanHistories::create([
+                'data_plan_id' => $request->data_plan_id,
+                'transaction_id' => $transaction->id,
+                'phone_number' => $request->phone_number,
+            ]);
+
+            $userWallet->decrement('balance', $dataPlan->price);
+            
+            DB::commit();
+            return response()->json([
+                'message' => 'Buy data plan successfully',
+                'transactions' => $transaction,
+            ]);
+
+        } catch (\Throwable $th) {
+            DB::rollback();
+            echo $th;
+            // return response()->json([
+            //     'errors' => $th->getMessage(),
+            // ]);
+        }
     }
 }
