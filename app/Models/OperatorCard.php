@@ -14,6 +14,12 @@ class OperatorCard extends Model
     protected $fillable = [
         'name',
         'status',
-        'thumbnail',
+        'thumbnail'
     ];
+
+    public function dataPlans()
+    {
+        return $this->hasMany(DataPlan::class);
+    }
+
 }
