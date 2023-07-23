@@ -34,7 +34,7 @@ class TopUpController extends Controller
         if (!$pinChecker) {
             return response()->json([
                 'message' => 'Your pin is wrong',
-            ]);
+            ], 400);
         }
 
         $transactionType = TransactionType::where('code', 'top_up')->first();
