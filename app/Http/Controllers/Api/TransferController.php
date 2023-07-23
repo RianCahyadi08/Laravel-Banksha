@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Transaction;
 use App\Models\TransactionType;
 use App\Models\PaymentMethod;
-use App\Models\TransactionHistory;
+use App\Models\TransferHistory;
 use App\Models\Wallet;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
@@ -63,6 +63,58 @@ class TransferController extends Controller
             return response()->json([
                 'message' => 'Your balance is not enough',
             ], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $transactionType = TransactionType::where('code', ['receive', 'transfer'])->orderBy('code', 'asc')->get();
+            $receiveTransactionType = $transactionType->first();
+            $transferTransactionType = $transactionType->last();
+            $transactionCode = strtoupper(Str::random(10));
+            $paymentMethod = PaymentMethod::where('code', 'bwa')->first();
+
+            $transferTransaction = Transaction::create([
+                'user_id' => $sender->id,
+                'transaction_type_id' => $transferTransactionType->id,
+                'payment_method_id' => $paymentMethod->id,
+                'description' => 'Transfer funds to '.$receiver->username,
+                'amount' => $request->amount,
+                'transaction_code' => $transactionCode,
+                'status' => 'success',
+            ]);
+            
+            $senderWallet->decrement('balance', $request->amount);
+
+            $transferTransaction = Transaction::create([
+                'user_id' => $receiver->id,
+                'transaction_type_id' => $receiveTransactionType->id,
+                'payment_method_id' => $paymentMethod->id,
+                'description' => 'Receive funds from '.$sender->username,
+                'amount' => $request->amount,
+                'transaction_code' => $transactionCode,
+                'status' => 'success',
+            ]);
+
+            Wallet::where('user_id', $receiver->id)->increment('balance', $request->amount);
+
+            TransferHistory::create([
+                'sender_id' => $sender->id,
+                'receiver_id' => $receiver->id,
+                'transaction_code' => $transactionCode,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Transfer successfully'
+            ], 200);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            echo $th;
+            // return response()->json([
+            //     'message' => $th->getMessage(),
+            // ], 500);
         }
     }
 }
