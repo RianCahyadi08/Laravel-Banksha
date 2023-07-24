@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\TransactionType;
+use App\Models\User;
+use App\Models\PaymentMethod;
 
 class Transaction extends Model
 {
@@ -21,4 +24,20 @@ class Transaction extends Model
         'description',
         'status',
     ];
+
+    public function transactionType()
+    {
+        return $this->belongsTo(transactionType::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class);
+    }
+
 }
