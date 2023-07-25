@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\TransferHistoriesController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\TipController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,10 +34,10 @@ Route::post('register', [AuthController::class, 'register'])->name('register');
 Route::post('login', [AuthController::class, 'login'])->name('login');
 Route::post('is-email-exist', [UserController::class, 'isEmailExist']);
 
-
 Route::post('webhooks', [WebHookController::class, 'update']);
 
 Route::group(['middleware' => 'jwt.verify'], function ($router) {
+    Route::post('logout', [AuthController::class, 'logout']);
     Route::post('top_up', [TopUpController::class, 'store']);
     Route::post('transfers', [TransferController::class, 'store']);
     Route::post('data_plans', [DataPlanController::class, 'store']);
@@ -49,4 +50,5 @@ Route::group(['middleware' => 'jwt.verify'], function ($router) {
     Route::put('users', [UserController::class, 'update']);
     Route::get('wallets', [WalletController::class, 'show']);
     Route::put('wallets', [WalletController::class, 'update']);
+    Route::get('tips', [TipController::class, 'index']);
 });
