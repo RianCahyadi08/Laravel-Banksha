@@ -7,6 +7,7 @@ use App\Models\User;
 use Melihovv\Base64ImageDecoder\Base64ImageDecoder;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
@@ -86,6 +87,24 @@ class UserController extends Controller
             echo $th;
         }
         
+    }
+
+    public function isEmailExist(Request $request)
+    {
+        $validator = Validator::make($request->only('email'), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response([
+                'errors' => $validator,
+            ], 400);
+        }
+
+        $isExist = User::where('email', $request->email)->exists();
+
+        return response()->json(['is_email_exist' => $isExist]);
+
     }
 
 }
