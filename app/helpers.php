@@ -2,6 +2,10 @@
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\PaymentMethod;
+use Melihovv\Base64ImageDecoder\Base64ImageDecoder;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
   
     function getUser($param)
     {
@@ -46,4 +50,14 @@ use App\Models\PaymentMethod;
         }
 
         return false;
+    }
+
+    function uploadBase64Image($base64Image)
+    {
+        $decoder        = new Base64ImageDecoder($base64Image, $allowedFormats = ['jpeg', 'png', 'gif', 'jpg']);
+        $decodedContent = $decoder->getDecodedContent(); 
+        $format         = $decoder->getFormat();
+        $image          = Str::random(10).'.'.$format;
+        Storage::disk('public')->put($image, $decodedContent);
+        return $image;
     }
