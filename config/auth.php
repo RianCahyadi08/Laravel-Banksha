@@ -68,10 +68,9 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
         ],
-
         'admin_users' => [
             'driver' => 'eloquent',
-            'table' => App\Models\AdminUser::class,
+            'model' => App\Models\AdminUser::class,
         ],
     ],
 
@@ -97,6 +96,12 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'admin_users' => [
+            'provider' => 'admin_users',
             'table' => 'password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,

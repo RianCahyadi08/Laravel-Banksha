@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\RedirectPaymentController;
+use App\Http\Controllers\Admin\TransactionController;
+use App\Http\Controllers\Admin\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,3 +21,11 @@ Route::get('/', function () {
 });
 
 Route::get('/payment-finished', [RedirectPaymentController::class, 'finished']);
+Route::group(['prefix' => 'admin'], function () {
+    Route::view('login', 'login')->name('admin.auth.index');
+    Route::post('login', [AuthController::class, 'login'])->name('admin.auth.login');
+    Route::group(['middleware' => 'auth'], function() {
+        Route::view('/', 'dashboard')->name('admin.dashboard');
+        Route::get('transaction', [TransactionController::class, 'index'])->name('admin.transaction.index');
+    });
+});
